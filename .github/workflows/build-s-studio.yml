@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24.18.0
+          node-version: 24
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -29,8 +29,8 @@ jobs:
         env:
           VSCODE_SKIP_NODE_VERSION_CHECK: "1"
 
-      - name: Build S-Studio
-        run: npm run compile-build
+      - name: Compile VS Code
+        run: npm run compile
         env:
           NODE_ENV: production
 
