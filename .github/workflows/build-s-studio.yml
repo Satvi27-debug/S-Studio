@@ -2,38 +2,42 @@ name: Build S-Studio (Windows)
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
-  build-windows:
+  build:
     runs-on: windows-2022
+
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24.18.0'
-          
+          node-version: 24.18.0
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          
+          python-version: "3.11"
+
       - name: Install Dependencies
-        run: |
-          npm i
+        run: npm install
         env:
-          VSCODE_SKIP_NODE_VERSION_CHECK: '1'
-          
-      - name: Build Windows Archive
-        run: |
-          npm run gulp vscode-win32-x64-archive
+          VSCODE_SKIP_NODE_VERSION_CHECK: "1"
+
+      - name: Build S-Studio
+        run: npm run compile-build
         env:
           NODE_ENV: production
-          
-      - name: Upload Windows Build
+
+      - name: Package Windows Build
+        run: npm run gulp vscode-win32-x64
+
+      - name: Upload Build
         uses: actions/upload-artifact@v4
         with:
           name: S-Studio-Windows-x64
