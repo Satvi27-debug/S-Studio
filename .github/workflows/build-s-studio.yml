@@ -1,0 +1,78 @@
+name: Build S-Studio (Windows & Linux)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: # Allows manual triggering from the Actions tab
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.18.0' # VS Code requires this specific version
+          
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install Dependencies
+        run: |
+          npm i
+        env:
+          VSCODE_SKIP_NODE_VERSION_CHECK: '1'
+          
+      - name: Build Windows Archive
+        run: |
+          npm run gulp vscode-win32-x64-archive
+        env:
+          NODE_ENV: production
+          
+      - name: Upload Windows Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: S-Studio-Windows-x64
+          path: ../VSCode-win32-x64
+
+  build-linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.18.0'
+          
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install System Dependencies for Build
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential g++ libx11-dev libxkbfile-dev libsecret-1-dev fakeroot rpm
+          
+      - name: Install Node Dependencies
+        run: |
+          npm i
+        env:
+          VSCODE_SKIP_NODE_VERSION_CHECK: '1'
+          
+      - name: Build Linux .deb Package
+        run: |
+          npm run gulp vscode-linux-x64-build-deb
+        env:
+          NODE_ENV: production
+          
+      - name: Upload Linux .deb Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: S-Studio-Linux-x64-deb
+          path: .build/linux/deb/amd64/deb/*.deb
