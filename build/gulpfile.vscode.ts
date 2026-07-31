@@ -558,10 +558,27 @@ function packageTask(platform: string, arch: string, sourceFolderName: string, d
 	return task;
 }
 
+let warnedAboutMissingSigntool = false;
+
+function warnAboutMissingSigntool(): void {
+	if (!warnedAboutMissingSigntool) {
+		warnedAboutMissingSigntool = true;
+		console.warn('[win32] signtool.exe not found; skipping Authenticode signature stripping.');
+	}
+}
+
 function hasAuthenticodeSignature(filePath: string): Promise<boolean> {
 	return new Promise((resolve, reject) => {
 		const proc = cp.spawn('signtool.exe', ['verify', '/pa', filePath]);
-		proc.on('error', reject);
+		proc.on('error', error => {
+			if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+				warnAboutMissingSigntool();
+				resolve(false);
+				return;
+			}
+
+			reject(error);
+		});
 		proc.on('exit', code => resolve(code === 0));
 	});
 }

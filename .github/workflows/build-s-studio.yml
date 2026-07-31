@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: windows-2022
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -17,28 +18,41 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: '22.x'
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
 
       - name: Install Dependencies
-        run: npm install
+        run: npm install --ignore-scripts
         env:
-          VSCODE_SKIP_NODE_VERSION_CHECK: "1"
+          VSCODE_SKIP_NODE_VERSION_CHECK: '1'
+          npm_config_disturl: ''
+          npm_config_target: ''
+          npm_config_runtime: ''
 
-      - name: Compile VS Code
-        run: npm run compile
+      - name: Run Postinstall
+        run: node build/npm/postinstall.ts
         env:
-          NODE_ENV: production
+          VSCODE_SKIP_NODE_VERSION_CHECK: '1'
+
+      - name: Download Electron
+        run: npm run electron
+
+      - name: Compile Source
+        run: npm run compile-build
+
+      - name: Download Built-in Extensions
+        run: npm run download-builtin-extensions
 
       - name: Package Windows Build
-        run: npm run gulp vscode-win32-x64
+        run: npm run gulp vscode-win32-x64-archive
 
-      - name: Upload Build
+      - name: Upload S-Studio Windows Build
         uses: actions/upload-artifact@v4
         with:
           name: S-Studio-Windows-x64
-          path: ../VSCode-win32-x64
+          path: .build/win32-x64/archive/VSCode-win32-x64.zip
+          if-no-files-found: warn
